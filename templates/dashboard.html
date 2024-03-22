@@ -20,7 +20,35 @@
     </style>
   </head>
   <body>
-    <h1>You are logged in!</h1>
+    <h1>Schedule a recurring time for Task to take place</h1>
+    <form action="/schedule_task" method="post">
+      <input
+        type="text"
+        name="name_of_task"
+        placeholder="Name of Task"
+        required
+      />
+      <input type="time" id="time" name="time" required />
+
+      <input type="submit" value="Create Task" required />
+    </form>
+    <table>
+      <tr>
+        <th>Name</th>
+        <th>Next Trigger</th>
+        <th>Status</th>
+        <th>Action</th>
+      </tr>
+
+      {% for job in jobs %}
+      <tr>
+        <th>{{job.name}}</th>
+        <th>{{job.next_run_time}}</th>
+        <th>{{job.status}}</th>
+        <th><button>Remove</button></th>
+      </tr>
+      {% endfor %}
+    </table>
     <a href="/logout"><button>Logout</button> </a>
   </body>
 </html>

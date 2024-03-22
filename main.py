@@ -3,13 +3,15 @@ from flask import Flask, request, render_template, redirect
 from Media import Media
 from instagrapi import Client
 from instagrapi.exceptions import LoginRequired
+from flask_apscheduler import APScheduler
 import logging
-import schedule
-import time
 import json
-import os
 from threading import Thread
-import datetime
+import datetime 
+
+
+from apscheduler.schedulers.background import BackgroundScheduler
+from apscheduler.triggers.cron import CronTrigger
 
 
 # Server global variables
@@ -18,7 +20,7 @@ MediaClient = Media("./media")
 instagramClient = Client()
 Secrets = json.load(open("secrets.json"))
 logger = logging.getLogger()
-
+scheduler = BackgroundScheduler()
 
 
 @App.route("/")
@@ -41,7 +43,7 @@ def logout():
 def dashboardGET():
     try:
         instagramClient.get_timeline_feed()
-        return render_template('dashboard.html')
+        return render_template('dashboard.html', jobs=scheduler.get_jobs())
     except Exception as e:
         return redirect('/')
 
@@ -55,18 +57,20 @@ def loginPOST():
     session = instagramClient.load_settings("settings.json")
 
     # Logging through session
+    print('about to check for session')
     if session:
         try:
             instagramClient.set_settings(session)
             instagramClient.login(username, password)
+            print('checking trying to logging through session')
 
             try: 
+                print('checking instagramclient')
                 instagramClient.get_timeline_feed()
                 logger.info("Session is VALID")
                 return redirect('/dashboard')
             except Exception as e:
-                logger.info("Session is invalid, need to login via username and password")
-                return render_template('welcome.html') 
+                print('Session is invalid, need to login via username and password')
 
         except Exception as e:
             print("Couldn't login user using session information", e)
@@ -83,54 +87,28 @@ def loginPOST():
         return render_template('welcome.html') 
 
 
-@App.route("/post")
-def post():
-    imgPath = request.args.get("img_path")
-    # storyPosted = instagramClient.photo_upload_to_story("media_portrait/" + imgPath)
-    storyPosted = instagramClient.photo_upload_to_story("cityexploring/" + imgPath)
-    if storyPosted:
-        return "We posted to your story!"
-    else:
-        return "We couldn't post your story :("
+@App.route("/schedule_task", methods=["POST"])
+def scheduleTask():
+    nameOfTask = request.form.get('name_of_task')
+    timeOfFirstTrigger = request.form.get('time').split(':')
+    print(nameOfTask)
+    print(timeOfFirstTrigger)
+    trigger = CronTrigger(
+        year="*", month="*", day="*", hour = timeOfFirstTrigger[0], minute = timeOfFirstTrigger[1], second="*"
+    )
+    scheduler.add_job(func = taskToRun, trigger = trigger, id = nameOfTask, args = [nameOfTask]) 
+    return redirect('/dashboard')
 
+@App.route("/tasks")
+def getTasks():
+    print(scheduler.get_jobs())
+    return []
 
-
-
-def job():
-    # Do some work that only needs to happen once...
-    print("=== JOB EXECUTED ===")
-    # return schedule.CancelJob
-
-
-@App.route("/jobs")
-def jobs():
-    return f"The scheduled job is {'running' if schedule.jobs else 'not running'}"
-
-
-@App.route("/start")
-def start():
-    schedule.every().day.at("23:17").do(job)
-    return "job starting"
-
-
-
-@App.route("/media")
-def media():
-    mediaDir = request.args.get("dir")
-    if mediaDir:
-        return MediaClient.getMedia(mediaDir)
-        pass
-    else:
-        return MediaClient.getMedia(None)
-
-
-def runSchedule():
-    while True:
-        schedule.run_pending()
-        time.sleep(1)
-
+def taskToRun(nameOfTask):
+    print(" ")
+    print(" ")
+    print("running " + nameOfTask)
 
 if __name__ == "__main__":
-    t = Thread(target=runSchedule)
-    t.start()
+    scheduler.start()
     App.run(port=1234, debug=True)
