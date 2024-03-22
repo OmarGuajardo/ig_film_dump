@@ -3,3 +3,4 @@ media/
 media_portrait/
 .vscode
 .venv
+settings.json

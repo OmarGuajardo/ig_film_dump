@@ -2,6 +2,8 @@ import json
 from flask import Flask, request, render_template
 from Media import Media
 from instagrapi import Client
+from instagrapi.exceptions import LoginRequired
+import logging
 import schedule
 import time
 import json
@@ -15,20 +17,61 @@ App = Flask(__name__)
 MediaClient = Media("./media")
 instagramClient = Client()
 Secrets = json.load(open("secrets.json"))
+logger = logging.getLogger()
+
 
 
 @App.route("/")
 def home():
     return render_template('welcome.html')
 
-@App.route("/login")
-def login():
+@App.route("/login", methods=['GET'])
+def loginGET():
     return render_template('login.html')
-    # twofac = request.args.get("twofac")
-    # if instagramClient.login(Secrets["username"], Secrets["password"], True, twofac):
-    #     return "You have logged in!"
-    # else:
-    #     return "We couldn't log you in"
+
+@App.route("/dashboard", methods=['GET'])
+def dashboardGET():
+    try:
+        instagramClient.get_timeline_feed()
+    except LoginRequired:
+        return 'youre not logged in get out of here'
+
+# POST Access Points
+@App.route("/login", methods=['POST'])
+def loginPOST():
+    username = request.form.get("username")
+    password = request.form.get("password")
+    twofac = request.form.get("twofac")
+
+    session = instagramClient.load_settings("settings.json")
+
+    # Logging through session
+    if session:
+        try:
+            instagramClient.set_settings(session)
+            instagramClient.login(username, password)
+
+            try: 
+                instagramClient.get_timeline_feed()
+                logger.info("Session is VALID")
+                return render_template('dashboard.html') 
+            except Exception as e:
+                logger.info("Session is invalid, need to login via username and password")
+                return render_template('welcome.html') 
+
+        except Exception as e:
+            print("Couldn't login user using session information", e)
+            return render_template('welcome.html') 
+    
+    # Logging through username and password
+    try:
+        instagramClient.login(username, password, True, twofac)
+        instagramClient.dump_settings("settings.json")
+        return render_template('dashboard.html') 
+
+    except Exception as e:
+        logger.info("Couldn't login user using username & password: %s" % e)
+        return render_template('welcome.html') 
 
 
 @App.route("/post")
