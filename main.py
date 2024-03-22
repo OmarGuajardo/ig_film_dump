@@ -1,5 +1,5 @@
 import json
-from flask import Flask, request, render_template
+from flask import Flask, request, render_template, redirect
 from Media import Media
 from instagrapi import Client
 from instagrapi.exceptions import LoginRequired
@@ -29,12 +29,21 @@ def home():
 def loginGET():
     return render_template('login.html')
 
+@App.route("/logout")
+def logout():
+    try: 
+        instagramClient.logout()
+        return redirect('/')
+    except Exception as e:
+        logger.info("Couldn't logout the user:  %s" % e)
+
 @App.route("/dashboard", methods=['GET'])
 def dashboardGET():
     try:
         instagramClient.get_timeline_feed()
-    except LoginRequired:
-        return 'youre not logged in get out of here'
+        return render_template('dashboard.html')
+    except Exception as e:
+        return redirect('/')
 
 # POST Access Points
 @App.route("/login", methods=['POST'])
@@ -54,7 +63,7 @@ def loginPOST():
             try: 
                 instagramClient.get_timeline_feed()
                 logger.info("Session is VALID")
-                return render_template('dashboard.html') 
+                return redirect('/dashboard')
             except Exception as e:
                 logger.info("Session is invalid, need to login via username and password")
                 return render_template('welcome.html') 
@@ -67,7 +76,7 @@ def loginPOST():
     try:
         instagramClient.login(username, password, True, twofac)
         instagramClient.dump_settings("settings.json")
-        return render_template('dashboard.html') 
+        return redirect('/dashboard')
 
     except Exception as e:
         logger.info("Couldn't login user using username & password: %s" % e)
@@ -85,12 +94,6 @@ def post():
         return "We couldn't post your story :("
 
 
-@App.route("/logout")
-def logout():
-    if instagramClient.logout():
-        return "You're logged out!"
-    else:
-        return "We couldn't log you out!"
 
 
 def job():
