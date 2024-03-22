@@ -10,9 +10,6 @@ from threading import Thread
 import datetime
 
 
-# ChatGpt Class to handle text generation and image generation?
-# Instagram Class to handle posting, captions and sequence
-
 # Server global variables
 App = Flask(__name__)
 MediaClient = Media("./media")
