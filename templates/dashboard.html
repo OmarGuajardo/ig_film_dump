@@ -21,7 +21,7 @@
   </head>
   <body>
     <h1>Schedule a recurring time for Task to take place</h1>
-    <form action="/schedule_task" method="post">
+    <form action="/schedule_task" method="post" enctype="multipart/form-data">
       <input
         type="text"
         name="name_of_task"
@@ -30,6 +30,7 @@
       />
       <input type="time" id="time" name="time" required />
 
+      <input type="file" name="file" required multiple />
       <input type="submit" value="Create Task" required />
     </form>
     <table>
@@ -42,7 +43,7 @@
 
       {% for job in jobs %}
       <tr>
-        <th>{{job.name}}</th>
+        <th>{{job.id}}</th>
         <th>{{job.next_run_time}}</th>
         <th>{{job.status}}</th>
         <th><button>Remove</button></th>

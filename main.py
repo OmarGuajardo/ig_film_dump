@@ -7,7 +7,7 @@ from flask_apscheduler import APScheduler
 import logging
 import json
 from threading import Thread
-import datetime 
+from datetime import datetime
 
 
 from apscheduler.schedulers.background import BackgroundScheduler
@@ -87,19 +87,28 @@ def loginPOST():
         return render_template('welcome.html') 
 
 
+
 @App.route("/schedule_task", methods=["POST"])
 def scheduleTask():
-    nameOfTask = request.form.get('name_of_task')
-    timeOfFirstTrigger = request.form.get('time').split(':')
-    print(nameOfTask)
-    print(timeOfFirstTrigger)
-    trigger = CronTrigger(
-        year="*", month="*", day="*", hour = timeOfFirstTrigger[0], minute = timeOfFirstTrigger[1], second="*"
-    )
-    scheduler.add_job(func = taskToRun, trigger = trigger, id = nameOfTask, args = [nameOfTask]) 
-    return redirect('/dashboard')
+    if request.method == 'POST':
+        # getting data from request
+        nameOfTask = request.form.get('name_of_task')
+        timeOfFirstTrigger = request.form.get('time').split(':')
+        files = request.files.getlist('file')
+        print("files",files)
+        print("nameOfTask: " ,  nameOfTask)
+        print("time of FirstTrigger: " , timeOfFirstTrigger)
 
-@App.route("/tasks")
+        # creating job
+        cronTrigger = CronTrigger(
+            year="*", month="*", day="*", hour = timeOfFirstTrigger[0], minute = timeOfFirstTrigger[1], second="0"
+        )
+        print("crontTrigger ",cronTrigger)
+        newJob = scheduler.add_job(func = taskToRun, trigger = cronTrigger, id = nameOfTask, args = [nameOfTask]) 
+        print("newJob ",newJob)
+        return redirect('/dashboard')
+
+@App.route("/jobs")
 def getTasks():
     print(scheduler.get_jobs())
     return []
@@ -107,8 +116,9 @@ def getTasks():
 def taskToRun(nameOfTask):
     print(" ")
     print(" ")
-    print("running " + nameOfTask)
+    print("running " + nameOfTask + " at " + str(datetime.now().hour) + ":" + str(datetime.now().minute))
 
 if __name__ == "__main__":
     scheduler.start()
-    App.run(port=1234, debug=True)
+    print("Scheduler Starting")
+    App.run(port=1234, debug=False)
