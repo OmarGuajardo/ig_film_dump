@@ -17,6 +17,14 @@
       .content {
         text-align: center;
       }
+      table {
+        width: 50vw;
+        margin-top: 40px;
+        border: 2px solid black; /* Outline with 4px black border */
+      }
+      .logout-btn {
+        margin-top: 20px;
+      }
     </style>
   </head>
   <body>
@@ -50,6 +58,6 @@
       </tr>
       {% endfor %}
     </table>
-    <a href="/logout"><button>Logout</button> </a>
+    <a class="logout-btn" href="/logout"><button>Logout</button> </a>
   </body>
 </html>

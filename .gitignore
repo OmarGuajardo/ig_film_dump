@@ -4,3 +4,4 @@ media_portrait/
 .vscode
 .venv
 settings.json
+__pycache__/

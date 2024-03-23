@@ -1,11 +1,8 @@
-import json
 from flask import Flask, request, render_template, redirect
-from Media import Media
 from instagrapi import Client
 import logging
-import json
 from datetime import datetime
-
+from classes.PostScheduler import PostScheduler
 
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.cron import CronTrigger
@@ -16,6 +13,7 @@ App = Flask(__name__)
 instagramClient = Client()
 logger = logging.getLogger()
 scheduler = BackgroundScheduler()
+postScheduler = PostScheduler()
 
 
 @App.route("/")
@@ -36,11 +34,12 @@ def logout():
 
 @App.route("/dashboard", methods=['GET'])
 def dashboardGET():
-    try:
-        instagramClient.get_timeline_feed()
-        return render_template('dashboard.html', jobs=scheduler.get_jobs())
-    except Exception as e:
-        return redirect('/')
+    return render_template('dashboard.html', jobs=postScheduler.getJobs())
+    # try:
+    #     instagramClient.get_timeline_feed()
+    #     return render_template('dashboard.html', jobs=scheduler.get_jobs())
+    # except Exception as e:
+    #     return redirect('/')
 
 # POST Access Points
 @App.route("/login", methods=['POST'])
@@ -94,13 +93,15 @@ def scheduleTask():
         print("nameOfTask: " ,  nameOfTask)
         print("time of FirstTrigger: " , timeOfFirstTrigger)
 
-        # creating job
-        cronTrigger = CronTrigger(
-            year="*", month="*", day="*", hour = timeOfFirstTrigger[0], minute = timeOfFirstTrigger[1], second="0"
-        )
-        print("crontTrigger ",cronTrigger)
-        newJob = scheduler.add_job(func = taskToRun, trigger = cronTrigger, id = nameOfTask, args = [nameOfTask]) 
-        print("newJob ",newJob)
+        # creating job using standard BackgroundSchedule
+        # cronTrigger = CronTrigger(
+        #     year="*", month="*", day="*", hour = timeOfFirstTrigger[0], minute = timeOfFirstTrigger[1], second="0"
+        # )
+        # newJob = scheduler.add_job(func = taskToRun, trigger = cronTrigger, id = nameOfTask, args = [nameOfTask]) 
+
+        # creating job using my PostScheduler
+        postScheduler.addPostJob(nameOfTask,timeOfFirstTrigger,'filepath')
+
         return redirect('/dashboard')
 
 @App.route("/jobs")
@@ -114,6 +115,7 @@ def taskToRun(nameOfTask):
     print("running " + nameOfTask + " at " + str(datetime.now().hour) + ":" + str(datetime.now().minute))
 
 if __name__ == "__main__":
-    scheduler.start()
+    # scheduler.start()
+    postScheduler.start()
     print("Scheduler Starting")
-    App.run(port=1234, debug=False)
+    App.run(port=1234, debug=True)
