@@ -2,11 +2,8 @@ import json
 from flask import Flask, request, render_template, redirect
 from Media import Media
 from instagrapi import Client
-from instagrapi.exceptions import LoginRequired
-from flask_apscheduler import APScheduler
 import logging
 import json
-from threading import Thread
 from datetime import datetime
 
 
@@ -16,9 +13,7 @@ from apscheduler.triggers.cron import CronTrigger
 
 # Server global variables
 App = Flask(__name__)
-MediaClient = Media("./media")
 instagramClient = Client()
-Secrets = json.load(open("secrets.json"))
 logger = logging.getLogger()
 scheduler = BackgroundScheduler()
 
