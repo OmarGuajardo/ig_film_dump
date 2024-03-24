@@ -1,33 +1,35 @@
 from apscheduler.schedulers.background import BackgroundScheduler
 from classes.PostJob import PostJob
 from apscheduler.triggers.cron import CronTrigger
-from datetime import datetime
+from instagrapi import Client
 
-class PostScheduler:
-    jobs = {}
+class PostScheduler(BackgroundScheduler):
     
-    def __init__(self):
-        self.scheduler = BackgroundScheduler()
+    def __init__(self, instagramClient):
+        super().__init__()
+        self.instagramClient = instagramClient 
 
-    def start(self):
-        self.scheduler.start()
 
     def addPostJob(self, nameOfJob, timeToTrigger, filePath):
-        newPostJob =  PostJob(nameOfJob, timeToTrigger, filePath)
+        newPostJob =  PostJob(nameOfJob, timeToTrigger, filePath, self.instagramClient)
         cronTrigger = CronTrigger(
             year="*", month="*", day="*", hour = timeToTrigger[0], minute = timeToTrigger[1], second="*"
         )
-        self.scheduler.add_job(func = newPostJob.makePost, trigger = cronTrigger, id = nameOfJob) 
+        super().add_job(func = self.executePostJob, trigger = cronTrigger, id = nameOfJob, args=[newPostJob]) 
         return 
 
 
-    def getJobs(self):
-        copyOfJobs = self.scheduler.get_jobs()
-        for job in copyOfJobs:
-            time_ampm = job.next_run_time.strftime("%I:%M:%S %p")
-            job.next_run_time = time_ampm   
-            job.next_pic = "WIP"
-        return copyOfJobs
+    def executePostJob(self,postJob):
+        if postJob.maybeMakePost():
+            print('sucessfully made post')
+        else:
+            print('nothing else to post')
+        return
+            
+
+
+
+
 
 
 

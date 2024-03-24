@@ -52,7 +52,7 @@
       {% for job in jobs %}
       <tr>
         <th>{{job.id}}</th>
-        <th>{{job.next_run_time}}</th>
+        <th>{{job.next_run_time.strftime("%I:%M:%S %p")}}</th>
         <th>{{job.status}}</th>
         <th><button>Remove</button></th>
       </tr>

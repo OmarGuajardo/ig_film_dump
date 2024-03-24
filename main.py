@@ -13,7 +13,7 @@ App = Flask(__name__)
 instagramClient = Client()
 logger = logging.getLogger()
 scheduler = BackgroundScheduler()
-postScheduler = PostScheduler()
+postScheduler = PostScheduler(instagramClient)
 
 
 @App.route("/")
@@ -34,7 +34,7 @@ def logout():
 
 @App.route("/dashboard", methods=['GET'])
 def dashboardGET():
-    return render_template('dashboard.html', jobs=postScheduler.getJobs())
+    return render_template('dashboard.html', jobs=postScheduler.get_jobs())
     # try:
     #     instagramClient.get_timeline_feed()
     #     return render_template('dashboard.html', jobs=scheduler.get_jobs())
@@ -93,26 +93,11 @@ def scheduleTask():
         print("nameOfTask: " ,  nameOfTask)
         print("time of FirstTrigger: " , timeOfFirstTrigger)
 
-        # creating job using standard BackgroundSchedule
-        # cronTrigger = CronTrigger(
-        #     year="*", month="*", day="*", hour = timeOfFirstTrigger[0], minute = timeOfFirstTrigger[1], second="0"
-        # )
-        # newJob = scheduler.add_job(func = taskToRun, trigger = cronTrigger, id = nameOfTask, args = [nameOfTask]) 
-
         # creating job using my PostScheduler
         postScheduler.addPostJob(nameOfTask,timeOfFirstTrigger,'filepath')
 
         return redirect('/dashboard')
 
-@App.route("/jobs")
-def getTasks():
-    print(scheduler.get_jobs())
-    return []
-
-def taskToRun(nameOfTask):
-    print(" ")
-    print(" ")
-    print("running " + nameOfTask + " at " + str(datetime.now().hour) + ":" + str(datetime.now().minute))
 
 if __name__ == "__main__":
     # scheduler.start()
