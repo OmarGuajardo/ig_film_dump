@@ -94,7 +94,7 @@ def scheduleTask():
         print("time of FirstTrigger: " , timeOfFirstTrigger)
 
         # creating job using my PostScheduler
-        postScheduler.addPostJob(nameOfTask,timeOfFirstTrigger,'filepath')
+        postScheduler.addPostJob(nameOfTask,timeOfFirstTrigger, files)
 
         return redirect('/dashboard')
 
