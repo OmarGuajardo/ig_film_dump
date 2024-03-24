@@ -22,15 +22,18 @@ class PostScheduler(BackgroundScheduler):
         # Making and Adding Job
         newPostJob =  PostJob(nameOfJob, timeToTrigger, self.instagramClient)
         cronTrigger = CronTrigger(
-            year="*", month="*", day="*", hour = timeToTrigger[0], minute = timeToTrigger[1], second="*"
+            year="*", month="*", day="*", hour = timeToTrigger[0], minute = timeToTrigger[1], second="*/20"
         )
         super().add_job(func = self.executePostJob, trigger = cronTrigger, id = nameOfJob, args=[newPostJob]) 
         return 
 
     
     def executePostJob(self,postJob):
-        if postJob.maybeMakePost():
+        postJobResult = postJob.maybeMakePost()  
+        if postJobResult == PostJob.POST_JOB_SUCCESS:
             print('sucessfully made post')
+        elif postJobResult == PostJob.POST_JOB_FAIL:
+            print('job failed for some reason')
         else:
             super().remove_job(postJob.name)
             print('nothing else to post, lets remove the job')

@@ -1,6 +1,9 @@
-
 import os
 class PostJob:
+
+    POST_JOB_SUCCESS = 0
+    POST_JOB_FAIL = 1
+    POST_JOB_FINISHED = 2
 
     def __init__(self, name, timeToTrigger, instagramClient):
         self.name = name
@@ -25,20 +28,19 @@ class PostJob:
         return file_paths
 
     def maybeMakePost(self):
-        # I'll need to return a multi variable here for:
-        # succeeded, 
-        # failed bc of instagram 
-        # or all photos publish, terminate this job
         if(self.nextPhotoToPublishIndex < len(self.photosToPublish)):
-            
             # Here's how you actually post it with the instagramClient
-            #     imgPath = request.args.get("img_path")
-            # storyPosted = instagramClient.photo_upload_to_story("media_portrait/" + imgPath)
-            print("posting ", self.photosToPublish[self.nextPhotoToPublishIndex])
-            self.nextPhotoToPublishIndex += 1
-            return True
+            try:
+                nextPhotoToPublishImagePath = self.photosToPublish[self.nextPhotoToPublishIndex]
+                storyPosted = self.instagramClient.photo_upload_to_story(nextPhotoToPublishImagePath,extra_data = {'is_paid_partnership' : 0})
+                print("posting ", self.photosToPublish[self.nextPhotoToPublishIndex])
+                self.nextPhotoToPublishIndex += 1
+                return self.POST_JOB_SUCCESS
+            except Exception as e:
+                print("post job failed because of ", e)
+                return self.POST_JOB_FAIL
         else:
-            return False
+            return self.POST_JOB_FINISHED
 
 
 

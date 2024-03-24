@@ -34,12 +34,12 @@ def logout():
 
 @App.route("/dashboard", methods=['GET'])
 def dashboardGET():
-    return render_template('dashboard.html', jobs=postScheduler.get_jobs())
-    # try:
-    #     instagramClient.get_timeline_feed()
-    #     return render_template('dashboard.html', jobs=scheduler.get_jobs())
-    # except Exception as e:
-    #     return redirect('/')
+    # return render_template('dashboard.html', jobs=postScheduler.get_jobs())
+    try:
+        instagramClient.get_timeline_feed()
+        return render_template('dashboard.html', jobs=postScheduler.get_jobs())
+    except Exception as e:
+        return redirect('/')
 
 # POST Access Points
 @App.route("/login", methods=['POST'])
@@ -84,19 +84,27 @@ def loginPOST():
 
 @App.route("/schedule_task", methods=["POST"])
 def scheduleTask():
-    if request.method == 'POST':
+    if isUserLoggedIn() and request.method == 'POST':
         # getting data from request
         nameOfTask = request.form.get('name_of_task')
         timeOfFirstTrigger = request.form.get('time').split(':')
         files = request.files.getlist('file')
-        print("files",files)
-        print("nameOfTask: " ,  nameOfTask)
-        print("time of FirstTrigger: " , timeOfFirstTrigger)
 
+        instagramClient.photo_upload_to_story
         # creating job using my PostScheduler
         postScheduler.addPostJob(nameOfTask,timeOfFirstTrigger, files)
 
         return redirect('/dashboard')
+    return redirect('/') 
+
+def isUserLoggedIn():
+    try: 
+        instagramClient.get_timeline_feed()
+        return True
+    except Exception as e:
+        print('use is not logged in')
+        return False
+
 
 
 if __name__ == "__main__":
