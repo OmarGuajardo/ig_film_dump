@@ -5,14 +5,15 @@ import os
 
 class PostScheduler(BackgroundScheduler):
     
+
+    MEDIA_FOLDER_PATH = 'static/media'
     def __init__(self, instagramClient):
         super().__init__()
         self.instagramClient = instagramClient 
 
-
     def addPostJob(self, nameOfJob, timeToTrigger, files):
         # Saving Files
-        directory = os.path.join('media', nameOfJob)
+        directory = os.path.join(self.MEDIA_FOLDER_PATH, nameOfJob)
         os.makedirs(directory, exist_ok=True)
 
         # Save the file to the specified directory

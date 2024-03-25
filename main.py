@@ -12,7 +12,6 @@ from apscheduler.triggers.cron import CronTrigger
 App = Flask(__name__)
 instagramClient = Client()
 logger = logging.getLogger()
-scheduler = BackgroundScheduler()
 postScheduler = PostScheduler(instagramClient)
 
 
@@ -34,12 +33,12 @@ def logout():
 
 @App.route("/dashboard", methods=['GET'])
 def dashboardGET():
-    # return render_template('dashboard.html', jobs=postScheduler.get_jobs())
-    try:
-        instagramClient.get_timeline_feed()
-        return render_template('dashboard.html', jobs=postScheduler.get_jobs())
-    except Exception as e:
-        return redirect('/')
+    return render_template('dashboard.html', jobs=postScheduler.get_jobs())
+    # try:
+    #     instagramClient.get_timeline_feed()
+    #     return render_template('dashboard.html', jobs=postScheduler.get_jobs())
+    # except Exception as e:
+    #     return redirect('/')
 
 # POST Access Points
 @App.route("/login", methods=['POST'])
@@ -82,9 +81,15 @@ def loginPOST():
 
 
 
+@App.route('/remove_job/<job_to_be_removed>')
+def removeJob(job_to_be_removed):
+    postScheduler.remove_job(job_to_be_removed)
+    return redirect('/dashboard') 
+
 @App.route("/schedule_task", methods=["POST"])
 def scheduleTask():
-    if isUserLoggedIn() and request.method == 'POST':
+    if request.method == 'POST':
+    # if isUserLoggedIn() and request.method == 'POST':
         # getting data from request
         nameOfTask = request.form.get('name_of_task')
         timeOfFirstTrigger = request.form.get('time').split(':')
