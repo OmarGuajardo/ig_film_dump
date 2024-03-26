@@ -111,7 +111,6 @@ def isUserLoggedIn():
 
 
 if __name__ == "__main__":
-    # scheduler.start()
     postScheduler.start()
     print("Scheduler Starting")
-    App.run(port=1234, debug=True)
+    App.run(host="0.0.0.0",port=1234, debug=False)
