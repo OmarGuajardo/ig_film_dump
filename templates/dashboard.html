@@ -25,6 +25,10 @@
       .logout-btn {
         margin-top: 20px;
       }
+      img {
+        height: 160px;
+        width: 90px;
+      }
     </style>
   </head>
   <body>
@@ -45,16 +49,24 @@
       <tr>
         <th>Name</th>
         <th>Next Trigger</th>
-        <th>Status</th>
+        <th>Next Pic</th>
         <th>Action</th>
       </tr>
 
       {% for job in jobs %}
       <tr>
         <th>{{job.id}}</th>
-        <th>{{job.next_run_time.strftime("%I:%M:%S %p")}}</th>
-        <th>{{job.status}}</th>
-        <th><button>Remove</button></th>
+        <th>{{job.next_run_time.strftime("%I:%M %p")}}</th>
+        <th>
+          {% if job and job.args and job.args|length > 0 %}
+          <img src="{{ job.args[0].getNextPhoto() }}" />
+          {% endif %}
+        </th>
+        <th>
+          <a class="logout-btn" href="/remove_job/{{job.id}}"
+            ><button>Remove</button>
+          </a>
+        </th>
       </tr>
       {% endfor %}
     </table>

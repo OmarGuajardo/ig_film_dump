@@ -12,7 +12,6 @@ from apscheduler.triggers.cron import CronTrigger
 App = Flask(__name__)
 instagramClient = Client()
 logger = logging.getLogger()
-scheduler = BackgroundScheduler()
 postScheduler = PostScheduler(instagramClient)
 
 
@@ -34,7 +33,6 @@ def logout():
 
 @App.route("/dashboard", methods=['GET'])
 def dashboardGET():
-    # return render_template('dashboard.html', jobs=postScheduler.get_jobs())
     try:
         instagramClient.get_timeline_feed()
         return render_template('dashboard.html', jobs=postScheduler.get_jobs())
@@ -81,6 +79,11 @@ def loginPOST():
         return render_template('welcome.html') 
 
 
+
+@App.route('/remove_job/<job_to_be_removed>')
+def removeJob(job_to_be_removed):
+    postScheduler.remove_job(job_to_be_removed)
+    return redirect('/dashboard') 
 
 @App.route("/schedule_task", methods=["POST"])
 def scheduleTask():
