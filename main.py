@@ -1,6 +1,8 @@
 from flask import Flask, request, render_template, redirect
 from instagrapi import Client
 import logging
+from logging import StreamHandler
+
 from datetime import datetime
 from classes.PostScheduler import PostScheduler
 
@@ -13,6 +15,12 @@ App = Flask(__name__)
 instagramClient = Client()
 logger = logging.getLogger()
 postScheduler = PostScheduler(instagramClient)
+
+# Configure the root logger to print to stdout
+handler = StreamHandler()
+handler.setLevel(logging.INFO)
+App.logger.addHandler(handler)
+App.logger.setLevel(logging.DEBUG)
 
 
 @App.route("/")
@@ -29,7 +37,7 @@ def logout():
         instagramClient.logout()
         return redirect('/')
     except Exception as e:
-        logger.info("Couldn't logout the user:  %s" % e)
+        App.logger.debug("Couldn't logout the user:  %s" % e)
 
 @App.route("/dashboard", methods=['GET'])
 def dashboardGET():
@@ -49,23 +57,23 @@ def loginPOST():
     session = instagramClient.load_settings("settings.json")
 
     # Logging through session
-    print('about to check for session')
+    App.logger.debug('about to check for session')
     if session:
         try:
             instagramClient.set_settings(session)
             instagramClient.login(username, password)
-            print('checking trying to logging through session')
+            App.logger.debug('checking trying to logging through session')
 
             try: 
-                print('checking instagramclient')
+                App.logger.debug('checking instagramclient')
                 instagramClient.get_timeline_feed()
                 logger.info("Session is VALID")
                 return redirect('/dashboard')
             except Exception as e:
-                print('Session is invalid, need to login via username and password')
+                App.logger.debug('Session is invalid, need to login via username and password')
 
         except Exception as e:
-            print("Couldn't login user using session information", e)
+            App.logger.debug("Couldn't login user using session information", e)
             return render_template('welcome.html') 
     
     # Logging through username and password
@@ -105,12 +113,12 @@ def isUserLoggedIn():
         instagramClient.get_timeline_feed()
         return True
     except Exception as e:
-        print('use is not logged in')
+        App.logger.debug('use is not logged in')
         return False
 
 
 
 if __name__ == "__main__":
     postScheduler.start()
-    print("Scheduler Starting")
-    App.run(host="0.0.0.0",port=1234, debug=False)
+    App.logger.debug("Scheduler Starting")
+    App.run(host="0.0.0.0",port=1234, debug=True)
