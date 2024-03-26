@@ -23,7 +23,7 @@ class PostScheduler(BackgroundScheduler):
         # Making and Adding Job
         newPostJob =  PostJob(nameOfJob, timeToTrigger, self.instagramClient)
         cronTrigger = CronTrigger(
-            year="*", month="*", day="*", hour = timeToTrigger[0], minute = timeToTrigger[1], second="*/20"
+            year="*", month="*", day="*", hour = "*", minute = timeToTrigger[1], second="0"
         )
         super().add_job(func = self.executePostJob, trigger = cronTrigger, id = nameOfJob, args=[newPostJob]) 
         return 

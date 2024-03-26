@@ -32,19 +32,19 @@ class PostJob:
         return self.photosToPublish[self.nextPhotoToPublishIndex]
 
     def maybeMakePost(self):
-        if(self.nextPhotoToPublishIndex < len(self.photosToPublish)):
-            # Here's how you actually post it with the instagramClient
-            try:
-                # nextPhotoToPublishImagePath = self.photosToPublish[self.nextPhotoToPublishIndex]
-                # storyPosted = self.instagramClient.photo_upload_to_story(nextPhotoToPublishImagePath,extra_data = {'is_paid_partnership' : 0})
-                print("posting ", self.photosToPublish[self.nextPhotoToPublishIndex])
-                self.nextPhotoToPublishIndex += 1
-                return self.POST_JOB_SUCCESS
-            except Exception as e:
-                print("post job failed because of ", e)
-                return self.POST_JOB_FAIL
-        else:
-            return self.POST_JOB_FINISHED
+        try:
+            nextPhotoToPublishImagePath = self.photosToPublish[self.nextPhotoToPublishIndex]
+            self.instagramClient.photo_upload_to_story(nextPhotoToPublishImagePath,extra_data = {'is_paid_partnership' : 0})
+            print("posting ", self.photosToPublish[self.nextPhotoToPublishIndex])
+            self.nextPhotoToPublishIndex += 1
+
+            if(self.nextPhotoToPublishIndex + 1 > len(self.photosToPublish)):
+                return self.POST_JOB_FINISHED
+            
+            return self.POST_JOB_SUCCESS
+        except Exception as e:
+            print("post job failed because of ", e)
+            return self.POST_JOB_FAIL
 
 
 
