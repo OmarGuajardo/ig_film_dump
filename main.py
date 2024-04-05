@@ -2,8 +2,8 @@ from flask import Flask, request, render_template, redirect
 from instagrapi import Client
 import logging
 from logging import StreamHandler
+import json
 
-from datetime import datetime
 from classes.PostScheduler import PostScheduler
 
 from apscheduler.schedulers.background import BackgroundScheduler
@@ -13,14 +13,13 @@ from apscheduler.triggers.cron import CronTrigger
 # Server global variables
 App = Flask(__name__)
 instagramClient = Client()
-logger = logging.getLogger()
-postScheduler = PostScheduler(instagramClient)
 
 # Configure the root logger to print to stdout
 handler = StreamHandler()
 handler.setLevel(logging.INFO)
 App.logger.addHandler(handler)
 App.logger.setLevel(logging.DEBUG)
+postScheduler = PostScheduler(instagramClient, App)
 
 
 @App.route("/")
@@ -54,37 +53,45 @@ def loginPOST():
     password = request.form.get("password")
     twofac = request.form.get("twofac")
 
-    session = instagramClient.load_settings("settings.json")
-
-    # Logging through session
-    App.logger.debug('about to check for session')
-    if session:
+    settings_file_path = "settings.json"
+    with open(settings_file_path , 'r') as json_file:
+        settings_json = json.load(json_file)
+                                 
+# Logging through session
+    App.logger.debug('about to check for settings json %s ' % settings_json)
+    if len(settings_json) != 0:
+        App.logger.debug("settings json was NOT empty")
         try:
+            App.logger.debug('trying to logging through session')
+            session = instagramClient.load_settings("settings.json")
             instagramClient.set_settings(session)
-            instagramClient.login(username, password)
-            App.logger.debug('checking trying to logging through session')
+            instagramClient.login(username, password, True, twofac)
 
-            try: 
+            try:
                 App.logger.debug('checking instagramclient')
                 instagramClient.get_timeline_feed()
-                logger.info("Session is VALID")
+                App.logger.debug("Session is VALID")
                 return redirect('/dashboard')
             except Exception as e:
                 App.logger.debug('Session is invalid, need to login via username and password')
 
         except Exception as e:
-            App.logger.debug("Couldn't login user using session information", e)
-            return render_template('welcome.html') 
-    
-    # Logging through username and password
-    try:
-        instagramClient.login(username, password, True, twofac)
-        instagramClient.dump_settings("settings.json")
-        return redirect('/dashboard')
+            App.logger.debug("Couldn't login user using session information %s" % e)
+            return render_template('welcome.html')
 
-    except Exception as e:
-        logger.info("Couldn't login user using username & password: %s" % e)
-        return render_template('welcome.html') 
+    else:
+        App.logger.debug("settings json was empty")
+        # Logging through username and password
+        try:
+            App.logger.debug("Session.json was empty so we are going to log in normally ")
+            instagramClient.login(username, password, True, twofac)
+            instagramClient.dump_settings("settings.json")
+            App.logger.debug("Dumped login settings to settings.json")
+            return redirect('/dashboard')
+
+        except Exception as e:
+            App.logger.debug("Couldn't login user using username & password: %s" % e)
+            return render_template('welcome.html')
 
 
 
@@ -99,11 +106,17 @@ def scheduleTask():
         # getting data from request
         nameOfTask = request.form.get('name_of_task')
         timeOfFirstTrigger = request.form.get('time').split(':')
+        timeOfFirstTriggerInt = [int(part) for part in timeOfFirstTrigger ]
+        dateOfFirstTriggger = request.form.get('date').split('-')
+        dateOfFirstTrigggerInt = [int(part) for part in dateOfFirstTriggger ]
+
         files = request.files.getlist('file')
 
-        instagramClient.photo_upload_to_story
         # creating job using my PostScheduler
-        postScheduler.addPostJob(nameOfTask,timeOfFirstTrigger, files)
+        postScheduler.addPostJob(nameOfTask, 
+                                dateOfFirstTrigggerInt,
+                                timeOfFirstTriggerInt, 
+                                files)
 
         return redirect('/dashboard')
     return redirect('/') 

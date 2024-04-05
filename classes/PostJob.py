@@ -6,12 +6,13 @@ class PostJob:
     POST_JOB_FINISHED = 2
     MEDIA_FOLDER_PATH = 'static/media'
 
-    def __init__(self, name, timeToTrigger, instagramClient):
+    def __init__(self, name, timeToTrigger, instagramClient, App):
         self.name = name
         self.timeToTrigger = timeToTrigger
         self.instagramClient = instagramClient
         self.nextPhotoToPublishIndex = 0
         self.photosToPublish = self.extractFilePaths() 
+        self.App = App
 
     
     def extractFilePaths(self):
@@ -25,7 +26,6 @@ class PostJob:
             if os.path.isfile(file_path):
                 # Add the file path to the list
                 file_paths.append(file_path)
-        print(file_paths)
         return file_paths
     
     def getNextPhoto(self):
@@ -35,7 +35,7 @@ class PostJob:
         try:
             nextPhotoToPublishImagePath = self.photosToPublish[self.nextPhotoToPublishIndex]
             self.instagramClient.photo_upload_to_story(nextPhotoToPublishImagePath,extra_data = {'is_paid_partnership' : 0})
-            print("posting ", self.photosToPublish[self.nextPhotoToPublishIndex])
+            self.App.logger.debug("posting %s" % self.photosToPublish[self.nextPhotoToPublishIndex])
             self.nextPhotoToPublishIndex += 1
 
             if(self.nextPhotoToPublishIndex + 1 > len(self.photosToPublish)):
@@ -43,7 +43,7 @@ class PostJob:
             
             return self.POST_JOB_SUCCESS
         except Exception as e:
-            print("post job failed because of ", e)
+            self.App.logger.debug("post job failed because of %s" % e)
             return self.POST_JOB_FAIL
 
 

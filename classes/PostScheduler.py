@@ -1,17 +1,21 @@
 from apscheduler.schedulers.background import BackgroundScheduler
 from classes.PostJob import PostJob
 from apscheduler.triggers.cron import CronTrigger
+from apscheduler.triggers.interval import IntervalTrigger
+import datetime
+
 import os
 
 class PostScheduler(BackgroundScheduler):
     
 
     MEDIA_FOLDER_PATH = 'static/media'
-    def __init__(self, instagramClient):
+    def __init__(self, instagramClient, App):
         super().__init__()
         self.instagramClient = instagramClient 
+        self.App = App
 
-    def addPostJob(self, nameOfJob, timeToTrigger, files):
+    def addPostJob(self, nameOfJob, dateToTrigger,timeToTrigger, files):
         # Saving Files
         directory = os.path.join(self.MEDIA_FOLDER_PATH, nameOfJob)
         os.makedirs(directory, exist_ok=True)
@@ -21,23 +25,36 @@ class PostScheduler(BackgroundScheduler):
             file.save(os.path.join(directory, file.filename))
 
         # Making and Adding Job
-        newPostJob =  PostJob(nameOfJob, timeToTrigger, self.instagramClient)
-        cronTrigger = CronTrigger(
-            year="*", month="*", day="*", hour = "*", minute = timeToTrigger[1], second="0"
+        newPostJob =  PostJob(nameOfJob, timeToTrigger, self.instagramClient, self.App)
+        start_date = datetime.datetime(year = dateToTrigger[0], 
+                                       month = dateToTrigger[1], 
+                                       day = dateToTrigger[2], 
+                                       hour = timeToTrigger[0], 
+                                       minute = timeToTrigger[1], 
+                                       second = 0)  # Year, Month, Day, Hour, Minute, Second
+
+        intervalTrigger = IntervalTrigger(
+            minutes=30,
+            start_date=start_date,
         )
-        super().add_job(func = self.executePostJob, trigger = cronTrigger, id = nameOfJob, args=[newPostJob]) 
+
+        # super().add_job(func = self.executePostJob, trigger = cronTrigger, id = nameOfJob, args=[newPostJob]) 
+        super().add_job(func = self.executePostJob, 
+                        trigger = intervalTrigger, 
+                        id = nameOfJob, 
+                        args=[newPostJob]) 
         return 
 
     
     def executePostJob(self,postJob):
         postJobResult = postJob.maybeMakePost()  
         if postJobResult == PostJob.POST_JOB_SUCCESS:
-            print('sucessfully made post')
+            self.App.logger.debug('sucessfully made post')
         elif postJobResult == PostJob.POST_JOB_FAIL:
-            print('job failed for some reason')
+            self.App.logger.debug('job failed for some reason')
         else:
             super().remove_job(postJob.name)
-            print('nothing else to post, lets remove the job')
+            self.App.logger.debug('nothing else to post, lets remove the job')
         return
             
 
