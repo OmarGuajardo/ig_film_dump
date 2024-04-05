@@ -3,7 +3,7 @@ from classes.PostJob import PostJob
 from apscheduler.triggers.cron import CronTrigger
 from apscheduler.triggers.interval import IntervalTrigger
 import datetime
-
+import pytz
 import os
 
 class PostScheduler(BackgroundScheduler):
@@ -31,14 +31,16 @@ class PostScheduler(BackgroundScheduler):
                                        day = dateToTrigger[2], 
                                        hour = timeToTrigger[0], 
                                        minute = timeToTrigger[1], 
-                                       second = 0)  # Year, Month, Day, Hour, Minute, Second
+                                       second = 0,
+                                       tzinfo=pytz.timezone(os.environ.get('TZ')
+                                                            ))  
+
 
         intervalTrigger = IntervalTrigger(
             minutes=30,
-            start_date=start_date,
+            start_date=start_date ,
         )
 
-        # super().add_job(func = self.executePostJob, trigger = cronTrigger, id = nameOfJob, args=[newPostJob]) 
         super().add_job(func = self.executePostJob, 
                         trigger = intervalTrigger, 
                         id = nameOfJob, 
