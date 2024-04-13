@@ -26,14 +26,13 @@ class PostScheduler(BackgroundScheduler):
 
         # Making and Adding Job
         newPostJob =  PostJob(nameOfJob, timeToTrigger, self.instagramClient, self.App)
+        
         start_date = datetime.datetime(year = dateToTrigger[0], 
                                        month = dateToTrigger[1], 
                                        day = dateToTrigger[2], 
                                        hour = timeToTrigger[0], 
                                        minute = timeToTrigger[1], 
-                                       second = 0,
-                                       tzinfo=pytz.timezone(os.environ.get('TZ')
-                                                            ))  
+                                       second = 0,)  
 
 
         intervalTrigger = IntervalTrigger(
